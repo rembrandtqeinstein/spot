@@ -47,6 +47,7 @@ export function SpotPin({ spot, highlighted = false }: Props) {
       icon={pinIcon(active, upcoming, highlighted)}
       eventHandlers={{
         mouseover(e) { e.target.openPopup(); },
+        mouseout(e)  { e.target.closePopup(); },
         click()      { navigate(`/spot/${spot.id}`); },
       }}
     >
