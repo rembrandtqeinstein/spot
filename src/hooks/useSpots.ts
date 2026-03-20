@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Spot, CreateSpotInput } from '../types';
-import { isSpotExpired } from '../utils/time';
+import { getMySpotIds, saveMySpotId } from '../lib/mySpots';
 
 export function useSpots() {
   const [spots, setSpots] = useState<Spot[]>([]);
@@ -11,15 +11,39 @@ export function useSpots() {
   const fetchSpots = useCallback(async () => {
     try {
       const now = new Date().toISOString();
-      const { data, error: fetchError } = await supabase
+      const myIds = getMySpotIds();
+
+      // Fetch public non-expired spots
+      const { data: publicData, error: publicError } = await supabase
         .from('spots')
         .select('*')
-        .gt('end_time', now)          // only non-expired
-        .eq('visibility', 'public')   // only public spots on the map
+        .gt('end_time', now)
+        .eq('visibility', 'public')
         .order('start_time', { ascending: true });
 
-      if (fetchError) throw fetchError;
-      setSpots((data as Spot[]) ?? []);
+      if (publicError) throw publicError;
+
+      let combined: Spot[] = (publicData as Spot[]) ?? [];
+
+      // Also fetch creator's own spots (including private) that haven't expired
+      if (myIds.length > 0) {
+        const { data: myData } = await supabase
+          .from('spots')
+          .select('*')
+          .gt('end_time', now)
+          .in('id', myIds);
+
+        if (myData) {
+          // Merge without duplicates
+          const existingIds = new Set(combined.map((s) => s.id));
+          const myOnly = (myData as Spot[]).filter((s) => !existingIds.has(s.id));
+          combined = [...combined, ...myOnly].sort(
+            (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          );
+        }
+      }
+
+      setSpots(combined);
     } catch (err: any) {
       setError(err.message ?? 'Failed to load spots');
     } finally {
@@ -30,7 +54,6 @@ export function useSpots() {
   useEffect(() => {
     fetchSpots();
 
-    // Real-time subscription
     const channel = supabase
       .channel('spots-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'spots' }, () => {
@@ -38,9 +61,7 @@ export function useSpots() {
       })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [fetchSpots]);
 
   const createSpot = async (input: CreateSpotInput): Promise<Spot> => {
@@ -52,6 +73,7 @@ export function useSpots() {
 
     if (insertError) throw new Error(insertError.message);
     const spot = data as Spot;
+    saveMySpotId(spot.id);   // remember this spot in localStorage
     setSpots((prev) => [...prev, spot]);
     return spot;
   };

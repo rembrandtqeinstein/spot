@@ -1,7 +1,8 @@
 import { Spot } from '../types';
-import { formatDateTime, isSpotActive, isSpotUpcoming, isSpotExpired } from '../utils/time';
-import { MapPin, Clock, User, Flame } from 'lucide-react';
+import { formatDateTime, isSpotActive, isSpotUpcoming } from '../utils/time';
+import { MapPin, Clock, User, Flame, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { isMySpot } from '../lib/mySpots';
 
 type Props = {
   spots: Spot[];
@@ -54,7 +55,19 @@ export function SpotSidebar({ spots, loading }: Props) {
                   <p className="font-medium text-sm text-gray-900 group-hover:text-brand-600 line-clamp-1">
                     {spot.name}
                   </p>
-                  <StatusBadge spot={spot} />
+                  <div className="flex items-center gap-1 shrink-0">
+                    {spot.visibility === 'private' && (
+                      <span className="text-xs bg-gray-100 text-gray-500 font-medium px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                        <Lock className="w-2.5 h-2.5" /> Private
+                      </span>
+                    )}
+                    {isMySpot(spot.id) && (
+                      <span className="text-xs bg-brand-100 text-brand-700 font-medium px-1.5 py-0.5 rounded-full">
+                        Yours
+                      </span>
+                    )}
+                    <StatusBadge spot={spot} />
+                  </div>
                 </div>
                 <div className="mt-1 space-y-0.5">
                   <div className="flex items-center gap-1 text-xs text-gray-500">
