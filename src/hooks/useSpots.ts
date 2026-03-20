@@ -14,7 +14,8 @@ export function useSpots() {
       const { data, error: fetchError } = await supabase
         .from('spots')
         .select('*')
-        .gt('end_time', now)  // only fetch non-expired spots
+        .gt('end_time', now)          // only non-expired
+        .eq('visibility', 'public')   // only public spots on the map
         .order('start_time', { ascending: true });
 
       if (fetchError) throw fetchError;

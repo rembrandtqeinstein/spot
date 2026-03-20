@@ -4,6 +4,8 @@ export type SpotLocation = {
   address: string;
 };
 
+export type Visibility = 'public' | 'private';
+
 export type Spot = {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ export type Spot = {
   start_time: string; // ISO string
   end_time: string;   // ISO string
   created_at: string; // ISO string
+  visibility: Visibility;
 };
 
 export type CreateSpotInput = {
@@ -22,6 +25,7 @@ export type CreateSpotInput = {
   creator_name: string;
   start_time: string;
   end_time: string;
+  visibility: Visibility;
 };
 
 export type NominatimResult = {

@@ -8,6 +8,7 @@ create table if not exists public.spots (
   start_time  timestamptz not null,
   end_time    timestamptz not null,
   created_at  timestamptz not null default now(),
+  visibility  text not null default 'public' check (visibility in ('public', 'private')),
 
   constraint end_after_start check (end_time > start_time),
   constraint max_duration check (end_time - start_time <= interval '24 hours'),

@@ -7,7 +7,7 @@ import { useSpot, useSpots } from '../hooks/useSpots';
 import { formatDateTime, isSpotActive, isSpotUpcoming, isSpotExpired } from '../utils/time';
 import {
   MapPin, Clock, User, AlignLeft, Share2, ChevronLeft,
-  CheckCircle2, XCircle, Hourglass, Copy, Check,
+  CheckCircle2, XCircle, Hourglass, Copy, Check, Lock,
 } from 'lucide-react';
 import { CreateSpotInput } from '../types';
 
@@ -82,7 +82,12 @@ export function SpotPage() {
 
           <div className="px-4 pb-4">
             {/* Status */}
-            <div className="mb-3">
+            <div className="mb-3 flex flex-wrap gap-2">
+              {spot.visibility === 'private' && (
+                <span className="inline-flex items-center gap-1 text-sm bg-gray-100 text-gray-600 font-semibold px-3 py-1 rounded-full">
+                  <Lock className="w-3 h-3" /> Private · Link only
+                </span>
+              )}
               {active && (
                 <span className="inline-flex items-center gap-1 text-sm bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-full">
                   <CheckCircle2 className="w-4 h-4" /> Live Now
