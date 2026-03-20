@@ -1,6 +1,4 @@
-import { useRef } from 'react';
 import { divIcon } from 'leaflet';
-import type { Marker as LeafletMarker } from 'leaflet';
 import { Marker, Popup } from 'react-leaflet';
 import { Spot } from '../types';
 import { formatDateTime, formatTime, isSpotActive, isSpotUpcoming } from '../utils/time';
@@ -43,7 +41,6 @@ function statusLabel(active: boolean, upcoming: boolean) {
 
 export function SpotPin({ spot, highlighted = false }: Props) {
   const navigate = useNavigate();
-  const markerRef = useRef<LeafletMarker>(null);
   const active = isSpotActive(spot.start_time, spot.end_time);
   const upcoming = isSpotUpcoming(spot.start_time);
   const status = statusLabel(active, upcoming);
@@ -77,13 +74,11 @@ export function SpotPin({ spot, highlighted = false }: Props) {
 
   return (
     <Marker
-      ref={markerRef}
       position={[spot.location.lat, spot.location.lng]}
       icon={pinIcon(active, upcoming, highlighted)}
       eventHandlers={{
-        mouseover() {
-          markerRef.current?.openPopup();
-        },
+        mouseover(e) { e.target.openPopup(); },
+        click() { navigate(`/spot/${spot.id}`); },
       }}
     >
       <Popup closeButton={false} className="spot-popup">
