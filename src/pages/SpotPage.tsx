@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MapView } from '../components/MapView';
 import { Navbar } from '../components/Navbar';
 import { CreateSpotModal } from '../components/CreateSpotModal';
+import { MySpotModal } from '../components/MySpotModal';
+import { RsvpSection } from '../components/RsvpSection';
 import { useSpot, useSpots } from '../hooks/useSpots';
 import { formatDateTime, isSpotActive, isSpotUpcoming, isSpotExpired } from '../utils/time';
 import {
@@ -17,6 +19,7 @@ export function SpotPage() {
   const { spot, loading, error } = useSpot(id);
   const { spots, createSpot } = useSpots();
   const [showCreate, setShowCreate] = useState(false);
+  const [showMySpots, setShowMySpots] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCreate = async (input: CreateSpotInput) => {
@@ -35,7 +38,7 @@ export function SpotPage() {
   if (loading) {
     return (
       <div className="flex flex-col h-screen">
-        <Navbar onCreateClick={() => setShowCreate(true)} />
+        <Navbar onCreateClick={() => setShowCreate(true)} onMySpots={() => setShowMySpots(true)} />
         <div className="flex-1 flex items-center justify-center text-gray-400">Loading…</div>
       </div>
     );
@@ -44,7 +47,7 @@ export function SpotPage() {
   if (error || !spot) {
     return (
       <div className="flex flex-col h-screen">
-        <Navbar onCreateClick={() => setShowCreate(true)} />
+        <Navbar onCreateClick={() => setShowCreate(true)} onMySpots={() => setShowMySpots(true)} />
         <div className="flex-1 flex flex-col items-center justify-center text-gray-500 gap-4">
           <XCircle className="w-10 h-10 text-red-400" />
           <p className="text-lg font-medium">Spot not found</p>
@@ -65,7 +68,7 @@ export function SpotPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <Navbar onCreateClick={() => setShowCreate(true)} />
+      <Navbar onCreateClick={() => setShowCreate(true)} onMySpots={() => setShowMySpots(true)} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Detail panel */}
@@ -135,6 +138,9 @@ export function SpotPage() {
               )}
             </div>
 
+            {/* RSVP */}
+            <RsvpSection spotId={spot.id} expired={expired} />
+
             {/* Share */}
             <div className="mt-6 p-3 bg-gray-50 rounded-xl">
               <p className="text-xs text-gray-500 font-medium mb-2 flex items-center gap-1">
@@ -171,6 +177,7 @@ export function SpotPage() {
       {showCreate && (
         <CreateSpotModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />
       )}
+      {showMySpots && <MySpotModal onClose={() => setShowMySpots(false)} />}
     </div>
   );
 }

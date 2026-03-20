@@ -40,3 +40,35 @@ create policy "Public insert spots"
 
 -- Enable realtime
 alter publication supabase_realtime add table public.spots;
+
+-- -------------------------------------------------------
+-- Migration: phone-based identity + RSVPs
+-- -------------------------------------------------------
+
+-- Add creator phone (private, never shown in UI)
+alter table public.spots
+  add column if not exists creator_phone text;
+
+-- RSVP responses
+create table if not exists public.spot_responses (
+  id              uuid primary key default gen_random_uuid(),
+  spot_id         uuid not null references public.spots(id) on delete cascade,
+  responder_name  text not null,
+  responder_phone text not null,
+  response        text not null check (response in ('yes', 'no')),
+  created_at      timestamptz not null default now(),
+  unique(spot_id, responder_phone)
+);
+
+alter table public.spot_responses enable row level security;
+
+create policy "Public read responses"
+  on public.spot_responses for select using (true);
+
+create policy "Public insert responses"
+  on public.spot_responses for insert with check (true);
+
+create policy "Public upsert responses"
+  on public.spot_responses for update using (true);
+
+alter publication supabase_realtime add table public.spot_responses;

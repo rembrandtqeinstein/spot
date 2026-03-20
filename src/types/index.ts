@@ -12,6 +12,7 @@ export type Spot = {
   description?: string;
   location: SpotLocation;
   creator_name: string;
+  creator_phone?: string;
   start_time: string; // ISO string
   end_time: string;   // ISO string
   created_at: string; // ISO string
@@ -23,9 +24,19 @@ export type CreateSpotInput = {
   description?: string;
   location: SpotLocation;
   creator_name: string;
+  creator_phone?: string;
   start_time: string;
   end_time: string;
   visibility: Visibility;
+};
+
+export type SpotResponse = {
+  id: string;
+  spot_id: string;
+  responder_name: string;
+  response: 'yes' | 'no';
+  created_at: string;
+  // responder_phone intentionally omitted — never fetched for display
 };
 
 export type NominatimResult = {

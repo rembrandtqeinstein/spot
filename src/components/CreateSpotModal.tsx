@@ -1,8 +1,9 @@
 import { useState, FormEvent } from 'react';
-import { X, Flame, User, AlignLeft, Clock, Globe, Lock } from 'lucide-react';
+import { X, Flame, User, AlignLeft, Clock, Globe, Lock, Phone } from 'lucide-react';
 import { CreateSpotInput, SpotLocation, Visibility } from '../types';
 import { getAllowedStartRange, getMaxEndTime, toDatetimeLocal, fromDatetimeLocal } from '../utils/time';
 import { LocationSearchInput } from './LocationSearchInput';
+import { getSavedPhone, savePhone } from '../lib/mySpots';
 
 type Props = {
   onClose: () => void;
@@ -20,6 +21,7 @@ export function CreateSpotModal({ onClose, onCreate }: Props) {
   const [location, setLocation] = useState<SpotLocation | null>(null);
   const [startTime, setStartTime] = useState(toDatetimeLocal(min));
   const [endTime, setEndTime] = useState(toDatetimeLocal(new Date(min.getTime() + 2 * 60 * 60 * 1000)));
+  const [creatorPhone, setCreatorPhone] = useState(getSavedPhone());
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -51,10 +53,12 @@ export function CreateSpotModal({ onClose, onCreate }: Props) {
 
     setSubmitting(true);
     try {
+      if (creatorPhone.trim()) savePhone(creatorPhone.trim());
       await onCreate({
         name: name.trim(),
         description: description.trim() || undefined,
         creator_name: creatorName.trim(),
+        creator_phone: creatorPhone.trim() || undefined,
         location: location!,
         start_time: fromDatetimeLocal(startTime).toISOString(),
         end_time: fromDatetimeLocal(endTime).toISOString(),
@@ -119,6 +123,22 @@ export function CreateSpotModal({ onClose, onCreate }: Props) {
               />
             </div>
             {errors.creator_name && <p className="text-xs text-red-500 mt-1">{errors.creator_name}</p>}
+          </div>
+
+          {/* Creator phone */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Your Phone <span className="text-gray-400 font-normal">(optional — private ID to find your spots later)</span></label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="tel"
+                value={creatorPhone}
+                onChange={(e) => setCreatorPhone(e.target.value)}
+                placeholder="e.g. +1 555 000 0000"
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">📵 Never shown to anyone. Use it in "My Spots" to find your events.</p>
           </div>
 
           {/* Location */}
