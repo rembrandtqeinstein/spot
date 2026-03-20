@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { divIcon } from 'leaflet';
 import { Marker, Popup } from 'react-leaflet';
 import { Spot } from '../types';
@@ -31,6 +32,9 @@ function pinIcon(active: boolean, upcoming: boolean, highlighted: boolean) {
 
 export function SpotPin({ spot, highlighted = false }: Props) {
   const navigate = useNavigate();
+  const markerRef = useRef<any>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const active = isSpotActive(spot.start_time, spot.end_time);
   const upcoming = isSpotUpcoming(spot.start_time);
   const shortAddress = spot.location.address.split(',').slice(0, 2).join(',');
@@ -41,18 +45,35 @@ export function SpotPin({ spot, highlighted = false }: Props) {
     ? { bg: '#dbeafe', text: '#1d4ed8', label: 'Upcoming' }
     : { bg: '#f3f4f6', text: '#6b7280', label: 'Ended' };
 
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  };
+
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => {
+      markerRef.current?.closePopup();
+    }, 300);
+  };
+
   return (
     <Marker
+      ref={markerRef}
       position={[spot.location.lat, spot.location.lng]}
       icon={pinIcon(active, upcoming, highlighted)}
       eventHandlers={{
-        mouseover(e) { e.target.openPopup(); },
-        mouseout(e)  { e.target.closePopup(); },
-        click()      { navigate(`/spot/${spot.id}`); },
+        mouseover() { cancelClose(); markerRef.current?.openPopup(); },
+        mouseout()  { scheduleClose(); },
+        click()     { navigate(`/spot/${spot.id}`); },
       }}
     >
       <Popup closeButton={false} className="spot-popup">
-        <div style={{ width: 220, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+        {/* onMouseEnter cancels the close timer; onMouseLeave restarts it */}
+        <div
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+          style={{ width: 220, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+        >
           <span style={{
             display: 'inline-block', fontSize: 11, fontWeight: 600,
             background: statusColor.bg, color: statusColor.text,
