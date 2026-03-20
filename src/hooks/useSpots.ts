@@ -71,9 +71,10 @@ export function useSpot(id: string | undefined) {
           .from('spots')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (fetchError) throw fetchError;
+        if (!data) throw new Error('Spot not found or has expired');
         setSpot(data as Spot);
       } catch (err: any) {
         setError(err.message ?? 'Spot not found');

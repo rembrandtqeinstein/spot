@@ -20,10 +20,12 @@ create index if not exists spots_end_time_idx on public.spots (end_time);
 -- Enable Row Level Security (RLS)
 alter table public.spots enable row level security;
 
--- Allow anyone to read non-expired spots
-create policy "Public read active spots"
+-- Allow anyone to read any spot (active, upcoming, or expired).
+-- The map filters out expired spots at the application level.
+-- Shared URLs must work even after an event ends.
+create policy "Public read all spots"
   on public.spots for select
-  using (end_time > now());
+  using (true);
 
 -- Allow anyone to insert (anonymous creation)
 create policy "Public insert spots"
