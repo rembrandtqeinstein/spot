@@ -48,12 +48,9 @@ export function SpotPin({ spot, highlighted = false }: Props) {
   const cancelClose = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
   };
-
   const scheduleClose = () => {
     cancelClose();
-    closeTimer.current = setTimeout(() => {
-      markerRef.current?.closePopup();
-    }, 300);
+    closeTimer.current = setTimeout(() => markerRef.current?.closePopup(), 300);
   };
 
   return (
@@ -62,18 +59,28 @@ export function SpotPin({ spot, highlighted = false }: Props) {
       position={[spot.location.lat, spot.location.lng]}
       icon={pinIcon(active, upcoming, highlighted)}
       eventHandlers={{
-        mouseover() { cancelClose(); markerRef.current?.openPopup(); },
-        mouseout()  { scheduleClose(); },
-        click()     { navigate(`/spot/${spot.id}`); },
+        mouseover()  { cancelClose(); markerRef.current?.openPopup(); },
+        mouseout()   { scheduleClose(); },
+        click()      { navigate(`/spot/${spot.id}`); },
+        // Once the popup is in the DOM, attach native listeners to it
+        popupopen(e) {
+          const el = (e as any).popup.getElement();
+          if (el) {
+            el.addEventListener('mouseenter', cancelClose);
+            el.addEventListener('mouseleave', scheduleClose);
+          }
+        },
+        popupclose(e) {
+          const el = (e as any).popup.getElement();
+          if (el) {
+            el.removeEventListener('mouseenter', cancelClose);
+            el.removeEventListener('mouseleave', scheduleClose);
+          }
+        },
       }}
     >
       <Popup closeButton={false} className="spot-popup">
-        {/* onMouseEnter cancels the close timer; onMouseLeave restarts it */}
-        <div
-          onMouseEnter={cancelClose}
-          onMouseLeave={scheduleClose}
-          style={{ width: 220, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
-        >
+        <div style={{ width: 220, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
           <span style={{
             display: 'inline-block', fontSize: 11, fontWeight: 600,
             background: statusColor.bg, color: statusColor.text,
